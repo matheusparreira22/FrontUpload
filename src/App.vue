@@ -1,38 +1,55 @@
 <script setup>
 import { RouterView } from 'vue-router'
-import { ref, onMounted, onBeforeMount, onUpdated } from 'vue';
+import { ref, onBeforeMount,  computed } from 'vue';
 import api from "./services/uploadFetch"
+
 const imgurl = ref()
-const inputImg = ref()
+const file = ref(null)
 onBeforeMount(async ()=>{
   await api.get('/upload').then(response =>{
     imgurl.value = response.data
-    console.log(imgurl)
   })
 
 })
 
-async function postUpload(){
+const uploadPost =  async ()=>{
+
+  try {
+        const fileData = file.value
+        console.log(fileData)
+        const formData = new FormData()
+        formData.append("imagem", fileData)
+        console.log(formData)
+        await api.post('/upload',formData,{
+          headers: {"Content-Type":"multipart/form-data"}
+        })
+      } catch(e) {
+        console.log(e)
+      }
+
+  
   try {
         const formData = new FormData()
-        formData.append("imagem", inputImg.value)
+        formData.append("imagem", file.value)
+        console.log(file.value)
         await api.post('/upload',formData)
       } catch(e) {
         console.log(e)
       }
-}
+};
+const uploadFile = (event) => {
+  console.log (event.target.files[0])
+  file.value = event.target.files[0];
+  console.log(file.value)
+};
+
 </script>
 <template>
-  <div>
+  <div v-if="imgurl">
     <img :src="imgurl.url_img" alt="">
   </div>
-  <div>
-    <img v-if="inputImg" :src="inputImg.value" alt="">
-  </div>
-  <form action="">
-    <input ref="input" type="file">
-  </form>
-  <button @click="postUpload()">Click</button>
+  <input @change="uploadFile" type="file">
+  <button @click="uploadPost">Click</button>
   <RouterView />
 </template>
 
